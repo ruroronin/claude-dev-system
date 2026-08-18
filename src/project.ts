@@ -9,7 +9,7 @@ export interface ProjectConfig  {
 	projectStack: string;
 }
 
-export default async function promptProject(): Promise<ProjectConfig> {
+export async function promptProject(): Promise<ProjectConfig> {
 	const projectName = await p.text({
 		message: "What's the project name",
 		placeholder: "my-project",

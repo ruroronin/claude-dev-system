@@ -4,14 +4,10 @@ import * as fs from "node:fs";
 import * as p from "@clack/prompts";
 import * as path from "node:path";
 
-import promptProject from "./project";
-
-const modelOptions = [
-  { value: "fable", label: "fable", hint: "top tier, highest cost — may be plan-gated" },
-  { value: "opus", label: "opus", hint: "most capable Opus — good for reasoning agents" },
-  { value: "sonnet", label: "sonnet", hint: "balanced, default for most work" },
-  { value: "haiku", label: "haiku", hint: "fast & cheap" },
-];
+import { promptAgents } from "./models";
+import { promptEnv } from "./environment";
+import { promptPM } from "./pm";
+import { promptProject } from "./project";
 
 const templateFiles = [
   "CLAUDE.md",
@@ -31,15 +27,6 @@ function bail<T>(value: T): asserts value is Exclude<T, symbol> {
 		p.cancel("Setup cancelled.");
 		process.exit(0);
 	}
-}
-
-function resolvePreset(strategy: string): { planner: string; tester: string; reviewer: string } {
-  switch (strategy) {
-    case "balanced": return { planner: "opus", tester: "sonnet", reviewer: "opus" };
-    case "budget":   return { planner: "sonnet", tester: "sonnet", reviewer: "sonnet" };
-    case "max":      return { planner: "fable", tester: "sonnet", reviewer: "fable" };
-    default:         return { planner: "opus", tester: "sonnet", reviewer: "opus" };
-  }
 }
 
 function buildPmModesBlock(server: string): string {
@@ -100,77 +87,11 @@ async function main() {
 
 	const { projectName, projectDesc, projectType, projectStack } = await promptProject();
 
-	const modelStrategy = await p.select({
-		message: "Model strategy for the agents:", 
-		options: [
-			{ value: "balanced", label: "Balanced", hint: "planner/reviewer: opus, tester: sonnet (recommended)" },
-			{ value: "budget", label: "Budget", hint: "all sonnet - cheaper, faster" },
-			{ value: "max", label: "Max", hint: "planner/reviewer: fable, tester: sonnet - top tier" },
-			{ value: "custom", label: "Custom", hint: "pick per agent" },
-		],
-	});
-	bail(modelStrategy);
+	const { agentModels } = await promptAgents();
 
-	let agentModels;
+	const { usePM, pmServerName } = await promptPM();
 
-	if (modelStrategy === "custom") {
-		const planner = await p.select({
-			message: "Model for the planner?",
-			options: modelOptions,
-		});
-		bail(planner);
-
-		const tester = await p.select({
-			message: "Model for the tester?",
-			options: modelOptions,
-		});
-		bail(tester);
-
-		const reviewer = await p.select({
-			message: "Model for the reviewer?",
-			options: modelOptions,
-		});
-		bail(reviewer);
-
-		agentModels = { planner, tester, reviewer };
-	} else {
-		agentModels = resolvePreset(modelStrategy);
-	}
-	
-
-	const usePM = await p.confirm({
-		message: "Integrates a PM tool (Linear)?",
-		initialValue: false,
-	});
-	bail(usePM);
-
-	let pmServerName = "linear-server";
-
-	if (usePM) {
-		const serverInput = await p.text({
-			message: "Your linear MCP server name?",
-			placeholder: "linear-server",
-			defaultValue: "linear-server",
-		});
-		bail(serverInput);
-		pmServerName = serverInput;
-	}
-
-	const environment = await p.select({
-		message: "Repo structure?",
-		options: [
-			{ value: "monorepo", label: "Monorepo", hint: "single repo, one CLAUDE.md" },
-			{ value: "standalone", label: "Standalone", hint: "one project, one repo" },
-			{ value: "multi", label: "Multi-repo", hint: "umbrella + sub-repos (advanced)" },
-		],
-	});
-	bail(environment);
-
-	const commitAgents = await p.confirm({
-		message: "Commit the agent files to git?", 
-		initialValue: true,
-	});
-	bail(commitAgents);
+	const { environment, commitAgents } = await promptEnv();
 
 	const config = {
 		projectName,
