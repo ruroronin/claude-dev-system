@@ -7,7 +7,7 @@ const templateFiles = [
   ".claude/agents/tester.md",
   ".claude/agents/reviewer.md",
   ".claude/settings.json",
-  ".claude/hooks/check-setup.sh",
+  ".claude/hooks/check-setup.js",
   "FINISH_SETUP.md",
   "docs/knowledge-base/concepts/.gitkeep",
   "docs/notebooklm/.gitkeep",
@@ -49,9 +49,9 @@ export function GenerateFiles(replacements: Record<string, string>, commitAgents
 
   		fs.mkdirSync(path.dirname(dest), { recursive: true });
   		fs.writeFileSync(dest, filled, "utf-8");
-		if (dest.endsWith(".sh")) {
-			fs.chmodSync(dest, 0o755);
-		}
+		// if (dest.endsWith(".sh")) {
+		// 	fs.chmodSync(dest, 0o755);
+		// }
 	}
 	updateGitignore(process.cwd(), commitAgents);
 

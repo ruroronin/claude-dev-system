@@ -37,7 +37,7 @@ Answer a short interview, and the system is installed. Then:
 claude
 ```
 
-A `SessionStart` hook detects the setup isn't finished and walks you through the remaining fields.
+Say **"finish setup"** and Claude walks you through the remaining fields. A `SessionStart` hook has already told it what's missing, so those two words are all the context it needs.
 
 ---
 
@@ -50,7 +50,7 @@ your-project/
 ├── .claude/
 │   ├── settings.json             # SessionStart hook registration
 │   ├── hooks/
-│   │   └── check-setup.sh        # self-silencing setup reminder
+│   │   └── check-setup.js        # self-silencing setup reminder
 │   └── agents/
 │       ├── planner.md
 │       ├── tester.md
@@ -98,8 +98,15 @@ Some fields are deliberately **not** filled by the script — they're better dec
 - **6. Critical path** — where a silent failure hurts most
 - **7. Review lenses** — what the reviewer should always check for
 - **8. Stack guidance** — teaching analogies, footguns, idioms
+- **9. Environment** — local services, how to run and test
 
-Run `claude` and the hook prompts you to fill these through discussion. You author the content; the agent guides. Setup is complete when no `{{TODO}}` markers remain — at which point the hook goes silent on its own.
+Run `claude` in the project and say **"finish setup"**. You author the content while claude guides and challenges you. Setup is complete when no `{{TODO}}` markers remain — at which point the reminder stops appearing on its own.
+
+### How the reminder works
+
+A `SessionStart` hook checks `CLAUDE.md` for `{{TODO}}` markers on every session start. While any remain, it passes a short instruction into Claude's context explaining what's unfinished. You won't see anything printed — the hook's output goes to Claude, not to your terminal — which is why "finish setup" works without you explaining anything.
+
+Once the markers are gone the check finds nothing, prints nothing, and the hook is a silent no-op. It never modifies itself and doesn't need removing.
 
 ---
 
@@ -142,7 +149,7 @@ Then authenticate with `/mcp` inside a session. The server name you use here mus
 
 **Hooks must be enabled.** The setup reminder is a `SessionStart` hook. If hooks are disabled in your config, nothing breaks — just open `FINISH_SETUP.md` and run `claude` with "finish setup".
 
-**Windows.** The hook script is made executable with `chmod 755`, which is a no-op on native Windows. On WSL, macOS, and Linux it works normally.
+**The reminder isn't visible.** `SessionStart` hook output is injected as context for Claude, not printed to your terminal. Seeing nothing on launch is expected — Claude has the context even though you can't see it.
 
 **Existing files are overwritten.** If the target project already has a `CLAUDE.md` or `.claude/agents/`, they'll be replaced. Commit or back up first.
 

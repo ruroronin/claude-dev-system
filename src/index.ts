@@ -66,10 +66,12 @@ async function main() {
   	? `  ▶ Next: connect the Linear MCP if you haven't:
   	    claude mcp add --transport http ${config.pmServerName} https://mcp.linear.app/mcp
 
-  	  Then run \`claude\` in this directory — it will walk you through
-  	  finishing the systems setup.`
-  	: `  ▶ Next: run \`claude\` in this directory — it will walk you through
-  	    finishing the systems setup.`;
+  	  Then run \`claude\` in this directory with the 
+	  prompt \`finish setup\` — it will walk you through 
+	  finishing the systems setup.`
+  	: `  ▶ Next: run \`claude\` in this directory with the 
+	prompt \`finish setup\` — it will walk you through 
+	finishing the systems setup.`;
 
 	p.outro(
 	  `Created ${filesAmount} files into ${process.cwd()}
