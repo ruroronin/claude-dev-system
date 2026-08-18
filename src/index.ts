@@ -16,6 +16,9 @@ const templateFiles = [
   ".claude/agents/planner.md",
   ".claude/agents/tester.md",
   ".claude/agents/reviewer.md",
+  ".claude/settings.json",
+  ".claude/hooks/check-setup.sh",
+  "FINISH_SETUP.md",
   "docs/knowledge-base/concepts/.gitkeep",
   "docs/notebooklm/.gitkeep",
   "docs/STATE.md",
@@ -255,10 +258,26 @@ async function main() {
 
   		fs.mkdirSync(path.dirname(dest), { recursive: true });
   		fs.writeFileSync(dest, filled, "utf-8");
+		if (dest.endsWith(".sh")) {
+			fs.chmodSync(dest, 0o755);
+		}
 	}
 	updateGitignore(process.cwd(), config.commitAgents);
 
-	p.outro(`Scaffolded ${templateFiles.length} files into ${process.cwd()}`);
+	const nextSteps = config.usePM
+  	? `  ▶ Next: connect the Linear MCP if you haven't:
+  	    claude mcp add --transport http ${config.pmServerName} https://mcp.linear.app/mcp
+
+  	  Then run \`claude\` in this directory — it will walk you through
+  	  finishing the systems setup.`
+  	: `  ▶ Next: run \`claude\` in this directory — it will walk you through
+  	    finishing the systems setup.`;
+
+	p.outro(
+	  `Created ${templateFiles.length} files into ${process.cwd()}
+
+	  ${nextSteps}`
+	);
 }
 
 main();
