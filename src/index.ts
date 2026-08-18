@@ -88,6 +88,18 @@ async function main() {
 	});
 	bail(usePM);
 
+	let pmServerName = "linear-server";
+
+	if (usePM) {
+		const serverInput = await p.text({
+			message: "Your linear MCP server name?",
+			placeholder: "linear-server",
+			defaultValue: "linear-server",
+		});
+		bail(serverInput);
+		pmServerName = serverInput;
+	}
+
 	const environment = await p.select({
 		message: "Repo structure?",
 		options: [
@@ -109,6 +121,7 @@ async function main() {
 		projectType,
 		agentModels,
 		usePM,
+		pmServerName,
 		environment,
 		commitAgents,
 	};
