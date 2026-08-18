@@ -73,6 +73,23 @@ function fillTemplate(content: string, replacements: Record<string, string>): st
   return result;
 }
 
+function updateGitignore(cwd: string, commitAgents: boolean): void {
+  if (commitAgents) return;  // committing = nothing to ignore
+
+  const gitignorePath = path.join(cwd, ".gitignore");
+  const marker = "# --- Claude agent system (added by create-claude-dev-system) ---";
+
+  let existing = "";
+  if (fs.existsSync(gitignorePath)) {
+    existing = fs.readFileSync(gitignorePath, "utf-8");
+  }
+
+  if (existing.includes(marker)) return;  // idempotent — already added
+
+  const block = `\n${marker}\n.claude/\nCLAUDE.md\ndocs/\n`;
+  fs.writeFileSync(gitignorePath, existing + block, "utf-8");
+}
+
 async function main() {
 	p.intro("create-claude-dev-system");
 
@@ -239,6 +256,7 @@ async function main() {
   		fs.mkdirSync(path.dirname(dest), { recursive: true });
   		fs.writeFileSync(dest, filled, "utf-8");
 	}
+	updateGitignore(process.cwd(), config.commitAgents);
 
 	p.outro(`Scaffolded ${templateFiles.length} files into ${process.cwd()}`);
 }
