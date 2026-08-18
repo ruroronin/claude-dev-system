@@ -4,6 +4,8 @@ import * as fs from "node:fs";
 import * as p from "@clack/prompts";
 import * as path from "node:path";
 
+import promptProject from "./project";
+
 const modelOptions = [
   { value: "fable", label: "fable", hint: "top tier, highest cost — may be plan-gated" },
   { value: "opus", label: "opus", hint: "most capable Opus — good for reasoning agents" },
@@ -96,33 +98,7 @@ function updateGitignore(cwd: string, commitAgents: boolean): void {
 async function main() {
 	p.intro("create-claude-dev-system");
 
-	const projectName = await p.text({
-		message: "What's the project name",
-		placeholder: "my-project",
-	});
-	bail(projectName);
-
-	const projectDesc = await p.text({
-		message: "One-line project description",
-	})
-	bail(projectDesc)
-
-	const projectType = await p.select({
-		message: "What type of project is this?",
-		options: [
-			{ value: "product", label: "Product", hint: "the real thing, ships to users" },
-			{ value: "library", label: "Library", hint: "consumed by other projects" },
-			{ value: "portfolio", label: "Portfolio", hint: "a showcase / learning project" },
-		],
-	});
-	bail(projectType);
-
-	const projectStack = await p.text({
-		message: "What's the project stack?",
-		placeholder: "java",
-		defaultValue: "java"
-	});
-	bail(projectStack);
+	const { projectName, projectDesc, projectType, projectStack } = await promptProject();
 
 	const modelStrategy = await p.select({
 		message: "Model strategy for the agents:", 
