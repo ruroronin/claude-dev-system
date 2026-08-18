@@ -20,5 +20,9 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0"
-  }
+  },
+  "files": [
+	"dist",
+	"templates/"
+  ]
 }
