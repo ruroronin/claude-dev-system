@@ -2,14 +2,14 @@ import * as p from "@clack/prompts";
 
 import { bail } from "./utils";
 
-export interface ProjectConfig  {
+export interface ProjectConfigs  {
 	projectName: string;
 	projectDesc: string;
 	projectType: string;
 	projectStack: string;
 }
 
-export async function promptProject(): Promise<ProjectConfig> {
+export async function promptProject(): Promise<ProjectConfigs> {
 	const projectName = await p.text({
 		message: "What's the project name",
 		placeholder: "my-project",
