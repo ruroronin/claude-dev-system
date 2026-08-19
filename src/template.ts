@@ -14,6 +14,14 @@ const templateFiles = [
   "docs/STATE.md",
 ];
 
+export type WriteMode = "overwrite" | "skip";
+
+const SENTINELS = ["CLAUDE.md", ".claude/agents", "docs/STATE.md"];
+
+export function detectExisting(cwd: string): string[] {
+  return SENTINELS.filter((s) => fs.existsSync(path.join(cwd, s)));
+}
+
 function fillTemplate(content: string, replacements: Record<string, string>): string {
   let result = content;
   for (const [placeholder, value] of Object.entries(replacements)) {
@@ -39,21 +47,31 @@ function updateGitignore(cwd: string, commitAgents: boolean): void {
   fs.writeFileSync(gitignorePath, existing + block, "utf-8");
 }
 
-export function GenerateFiles(replacements: Record<string, string>, commitAgents: boolean): number {
+export function GenerateFiles(
+	replacements: Record<string, string>,
+	commitAgents: boolean, 
+	mode: WriteMode
+): { written: number, skipped: number } {
+	let written = 0;
+	let skipped = 0;
+
 	for (const file of templateFiles) {
   		const src = path.join(__dirname, "..", "templates", file);
   		const dest = path.join(process.cwd(), file);
+
+		if (mode === "skip" && fs.existsSync(dest)) {
+			skipped++;
+			continue;
+		}
 
 		const content = fs.readFileSync(src, "utf-8");
   		const filled = fillTemplate(content, replacements);
 
   		fs.mkdirSync(path.dirname(dest), { recursive: true });
   		fs.writeFileSync(dest, filled, "utf-8");
-		// if (dest.endsWith(".sh")) {
-		// 	fs.chmodSync(dest, 0o755);
-		// }
+		written++;
 	}
 	updateGitignore(process.cwd(), commitAgents);
 
-	return templateFiles.length;
+	return { written, skipped }
 }

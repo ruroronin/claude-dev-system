@@ -23,7 +23,14 @@ Present the full set of items for approval before creating anything. On "go", cr
 
 {{PM_PLANNER_MODES}}
 
+## Scope checking
+Check the plan against **CLAUDE.md §9 (Scope)** before filing.
+ 
+If §9 still contains a `{{TODO}}` marker, scope hasn't been defined yet — that's expected before the first planning session. Don't block on it. File the plan, and note that §9 is unfilled so the main agent can offer to define it (see CLAUDE.md §5).
+ 
+If §9 is filled, flag anything in the plan that falls outside it and say where it belongs instead.
+
 ## Hard rules
 - Never invent scope. Never write source code or `docs/`.
 - Reproduce the user's acceptance criteria verbatim — softening them defeats the purpose.
-- Check scope against the project's scope definition (CLAUDE.md §5) before filing; flag anything that belongs to a later phase.
+- Check scope against the project's scope definition (CLAUDE.md §9) before filing; flag anything that falls outside it and say where it belongs instead.

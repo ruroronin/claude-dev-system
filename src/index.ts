@@ -6,7 +6,8 @@ import { type EnvConfigs, promptEnv } from "./environment";
 import { type AgentsConfigs, promptAgents } from "./models";
 import { buildPmFragment, type PmConfigs, promptPM } from "./pm";
 import { type ProjectConfigs, promptProject } from "./project";
-import { GenerateFiles } from "./template";
+import { detectExisting, GenerateFiles, type WriteMode } from "./template";
+import { bail } from "./utils";
 
 type Config = ProjectConfigs & AgentsConfigs & PmConfigs & EnvConfigs;
 
@@ -31,6 +32,33 @@ function setConfigs(
 
 async function main() {
 	p.intro("create-claude-dev-system");
+
+	const force = process.argv.includes("--force");
+	let mode: WriteMode = "overwrite";
+
+	const existing = detectExisting(process.cwd());
+
+	if (existing.length > 0 && !force) {
+		p.log.warn(`Existing agent system found: ${existing.join(", ")}`);
+
+		const choice = await p.select({
+			message: "How should existing files be handled?",
+			options: [
+				{ value: "cancel",    label: "Cancel",        hint: "change nothing" },
+				{ value: "skip",      label: "Keep existing", hint: "only write new files" },
+				{ value: "overwrite", label: "Overwrite",     hint: "replace everything" },
+			],
+			initialValue: "cancel",
+		});
+		bail(choice);
+
+		if (choice === "cancel") {
+			p.cancel("Nothing was changed.");
+			process.exit(0);
+		}
+
+		mode = choice as WriteMode;
+	}
 
 	const projectConfig = await promptProject();
 	const agentConfig = await promptAgents();
@@ -60,7 +88,7 @@ async function main() {
 		"{{REVIEWER_TOOLS}}": "Read, Grep, Glob, Write, Edit",
 	};
 
-	let filesAmount = GenerateFiles(replacements, config.commitAgents)
+	const { written, skipped } = GenerateFiles(replacements, config.commitAgents, mode);
 
 	const nextSteps = config.usePM
   	? `  ▶ Next: connect the Linear MCP if you haven't:
@@ -73,8 +101,12 @@ async function main() {
 	prompt \`finish setup\` — it will walk you through 
 	finishing the systems setup.`;
 
+	const summary = skipped > 0
+		? `Created ${written} files, kept ${skipped} existing, in ${process.cwd()}`
+		: `Created ${written} files into ${process.cwd()}`;
+
 	p.outro(
-	  `Created ${filesAmount} files into ${process.cwd()}
+	  `${summary}
 
 	  ${nextSteps}`
 	);
