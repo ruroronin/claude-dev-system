@@ -31,13 +31,13 @@ In the root of any project:
 npx create-claude-dev-system
 ```
 
-Answer a short interview, and the system is installed. Then:
+Answer a short interview, then:
 
 ```bash
 claude
 ```
 
-A `SessionStart` hook detects the setup isn't finished and walks you through the remaining fields.
+Say **"finish setup"** and Claude walks you through the remaining fields. A `SessionStart` hook has already told it what's missing, so those two words are all the context it needs.
 
 ---
 
@@ -50,7 +50,7 @@ your-project/
 ├── .claude/
 │   ├── settings.json             # SessionStart hook registration
 │   ├── hooks/
-│   │   └── check-setup.sh        # self-silencing setup reminder
+│   │   └── check-setup.js        # self-silencing setup reminder
 │   └── agents/
 │       ├── planner.md
 │       ├── tester.md
@@ -61,6 +61,24 @@ your-project/
     │   └── concepts/
     └── notebooklm/               # self-contained exports for NotebookLM
 ```
+
+---
+
+## Commands
+
+The generated system is driven by a small set of phrases:
+
+| Command | What happens |
+| --- | --- |
+| `start session` | Timestamp, read `docs/STATE.md`, orient |
+| `pause session` | Log a row for time worked — for breaks, not stopping points |
+| `resume session` | New log row, continue where you paused |
+| `end session` | Log the row, run the reviewer in the background |
+| `finish setup` | Fill the stack and environment sections |
+| `finish planning` | File the agreed plan, then offer any remaining setup sections |
+| `run the reviewer` | Review and document on demand |
+
+Nothing runs implicitly — the planner and reviewer are invoked, never self-starting.
 
 ---
 
@@ -88,18 +106,54 @@ your-project/
 
 Model **aliases** are written into the agent files rather than pinned version IDs, so they resolve to the current model in each tier and don't go stale. Note that `fable` may be plan-gated depending on your account.
 
+This sets the model for the three subagents only — your main session's model is your own Claude Code setting.
+
 ---
 
 ## Finishing setup
 
-Some fields are deliberately **not** filled by the script — they're better decided by thinking than by a prompt. They're left as `{{TODO}}` markers in `CLAUDE.md`:
+Some sections of `CLAUDE.md` are deliberately left as `{{TODO}}` markers. They're better decided by thinking than by a prompt, and they arrive in two stages.
 
-- **5. Scope** — what's in, what's explicitly excluded
-- **6. Critical path** — where a silent failure hurts most
-- **7. Review lenses** — what the reviewer should always check for
-- **8. Stack guidance** — teaching analogies, footguns, idioms
+**Stage 1 — answerable immediately.** Say `finish setup`.
 
-Run `claude` and the hook prompts you to fill these through discussion. You author the content; the agent guides. Setup is complete when no `{{TODO}}` markers remain — at which point the hook goes silent on its own.
+- **7. Stack guidance** — teaching analogies, footguns, idioms
+- **8. Environment** — local services, how to run and test
+
+**Stage 2 — derived from planning.** These can't be written before there's a plan, so they're never asked for upfront.
+
+- **9. Scope** — what's in, what's explicitly excluded
+- **10. Critical path** — where a silent failure hurts most
+- **11. Review lenses** — what the reviewer should always check for
+
+When you say `finish planning`, Claude offers these if any remain. Declining is free — it asks again next time, so stopping halfway loses nothing. Telling Claude never to ask again creates an empty `.claude/.setup-optout` file and stops the offer permanently; delete it to re-enable.
+
+You author the content; the agent guides and challenges. A section is done when its marker and explanatory comment are gone.
+
+### How the reminder works
+
+A `SessionStart` hook checks `CLAUDE.md` and passes a note into Claude's context describing what's unfilled and which stage it belongs to. **You won't see anything printed** — hook output goes to Claude, not your terminal. That's why `finish setup` works without you explaining anything.
+
+Once every section is filled, the check finds nothing, prints nothing, and the hook is a silent no-op. It never modifies itself and doesn't need removing.
+
+---
+
+## Running on an existing project
+
+If the tool finds an agent system already installed — it looks for `CLAUDE.md`, `.claude/agents/`, and `docs/STATE.md` — it stops before the interview and asks what to do:
+
+| Choice | Behaviour |
+| --- | --- |
+| **Cancel** (default) | Nothing is written. Hitting enter is safe. |
+| **Keep existing** | Only writes files that don't already exist. Useful for adding missing pieces without touching what's there. |
+| **Overwrite** | Replaces everything. Existing content is lost. |
+
+The check happens *before* the interview, so you're never asked eight questions only to discover your files are at risk.
+
+To skip the prompt entirely — for scripted or CI use — pass `--force`, which overwrites without asking:
+
+```bash
+npx create-claude-dev-system --force
+```
 
 ---
 
@@ -115,7 +169,7 @@ Run `claude` and the hook prompts you to fill these through discussion. You auth
 
 Subagents run in isolation and can't hold a conversation — they take a prompt and return a result. Planning is worth doing *with* you, so it happens in the main conversation: you draft the acceptance criteria and interfaces, the agent challenges and refines them. The planner subagent only files the result.
 
-That's deliberate. Writing your own acceptance criteria up front is the habit that makes you think and a better developer.
+That's deliberate. Writing your own definition of done up front is what makes an unfinished feature visible, and it's a great habit to have.
 
 ---
 
@@ -142,9 +196,9 @@ Then authenticate with `/mcp` inside a session. The server name you use here mus
 
 **Hooks must be enabled.** The setup reminder is a `SessionStart` hook. If hooks are disabled in your config, nothing breaks — just open `FINISH_SETUP.md` and run `claude` with "finish setup".
 
-**Windows.** The hook script is made executable with `chmod 755`, which is a no-op on native Windows. On WSL, macOS, and Linux it works normally.
+**The reminder isn't visible.** `SessionStart` hook output is injected as context for Claude, not printed to your terminal. Seeing nothing on launch is expected — Claude has the context even though you can't see it.
 
-**Existing files are overwritten.** If the target project already has a `CLAUDE.md` or `.claude/agents/`, they'll be replaced. Commit or back up first.
+**Existing installations are detected.** If the target already has `CLAUDE.md`, `.claude/agents/`, or `docs/STATE.md`, the tool stops and asks before writing anything — see *Running on an existing project* above. Pass `--force` to skip the check and overwrite.
 
 ---
 

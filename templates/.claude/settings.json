@@ -2,11 +2,10 @@
 	"hooks": {
 		"SessionStart": [
 			{
-				"matcher": "startup",
 				"hooks": [
 					{
 						"type": "command",
-						"command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-setup.sh",
+						"command": "node .claude/hooks/check-setup.js",
 						"timeout": 30
 					}
 				]
