@@ -1,7 +1,7 @@
 {
   "name": "create-claude-dev-system",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "CLI that installs a Claude Code agent system (planner, tester, reviewer) with a memory protocol and optional Linear integration into any codebase.",
   "main": "index.js",
   "bin": {
     "create-claude-dev-system": "./dist/index.js"
@@ -10,9 +10,27 @@
     "build": "tsc",
     "dev": "tsc --watch"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+	"claude",
+    "claude-code",
+    "cli",
+    "ai-agents",
+    "developer-tools",
+    "project-setup"
+  ],
+  "author": "Ricardo Ramos <r.ramos@ricardoframos.com>",
+  "license": "MIT",
+  "repository": {
+	"type": "git",
+	"url": "git+https://github.com/ruroronin/claude-dev-system.git"
+  },
+  "bugs": {
+	"url": "https://github.com/ruroronin/claude-dev-system/issues"
+  },
+  "homepage": "https://github.com/ric-ram/claude-dev-system#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "type": "commonjs",
   "devDependencies": {
     "@types/node": "^26.2.0",
