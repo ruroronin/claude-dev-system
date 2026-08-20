@@ -223,4 +223,4 @@ npm link
 
 ## Licence
 
-ISC
+MIT
